@@ -1,13 +1,15 @@
 from pymongo import MongoClient
-conn = MongoClient('localhost',27017)
+
+conn = MongoClient('localhost', 27017)
 
 db = conn.testdb
-db.col.insert({"name":'yanying','province':'江苏','age':25})
+json_str = {"ch": "market.ltcusdt.trade.detail",
+            "ts": 1541950729278.0,
+            "tick": {"id": 27740800752, "ts": 1541950729176, "data": [
+                {"amount": 2.000000000000000000, "ts": 1541950729176.0, "id": 2774080075216467551499.0
+                 "price": 51.200000000000000000, "direction": "sell"},
+                {"amount": 0.388800000000000000, "ts": 1541950729176.0, "id": 2774080075216467552453.0,
+                 "price": 51.200000000000000000, "direction": "sell"}]}
+            };
 
-db.col.insert([
-    {"name":'yanying','province':'江苏','age':25},
-    {"name":'张三','province':'浙江','age':24},
-    {"name":'张三1','province':'浙江1','age':25},
-    {"name":'张三2','province':'浙江2','age':26},
-    {"name":'张三3','province':'浙江3','age':28},
-])
+db.col.insert(json_str)
