@@ -12,8 +12,10 @@ class price:
         while(True):
             try:
                 self.ws = create_connection("wss://api.huobipro.com/ws")
+                print("连接成功")
             except:
-                print('connect ws error,retry...')
+                print('连接失败，重连中...')
+                time.sleep(1)
     #订阅
     def sub_trade(self):
         self.connect()
@@ -29,8 +31,7 @@ class price:
                 compressData = self.ws.recv()
                 result = gzip.decompress(compressData).decode('utf-8')
             except:
-                print('网络可能连接失败,1秒后重新连接')
-                time.sleep(1)
+                print('网络可能连接失败,重新连接')
                 self.sub_trade()
             if result[:7] == '{"ping"':
                 ts = result[8:21]
@@ -43,6 +44,8 @@ class price:
                 for i, value in enumerate(data['tick']['data']):
                     data['tick']['data'][i]['id'] = float(data['tick']['data'][i]['id'])
                 db.price_history.insert(data)
+                print("执行到位")
+
 if __name__ == '__main__':
     price().run()
 
