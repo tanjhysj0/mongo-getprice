@@ -13,6 +13,7 @@ class price:
             try:
                 self.ws = create_connection("wss://api.huobipro.com/ws")
                 print("连接成功")
+                return
             except:
                 print('连接失败，重连中...')
                 time.sleep(1)
