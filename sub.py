@@ -18,32 +18,23 @@ if __name__ == '__main__':
 
 
     conn = MongoClient('localhost', 27017)
-    db = conn.price_history
-
+    db = conn.ltcusdt
     # 价格流
-    tradeStr="""{"sub": "market.ltcusdt.trade.detail","id": "id10"}"""
+    tradeStr="""{"sub": "market.ltcusdt.trade.detail","id":"id1"}"""
     ws.send(tradeStr)
     while(True):
         compressData=ws.recv()
         result=gzip.decompress(compressData).decode('utf-8')
-        print(result[:13])
         if result[:7] == '{"ping"':
             ts=result[8:21]
             pong='{"pong":'+ts+'}'
             ws.send(pong)
             ws.send(tradeStr)
-
-        elif result[:8]=="{'id': 'id10'":
-            continue;
         else:
-            print(type(result))
-
-
             data = json.loads(result)
-            print(data)
-            data['tick']['data']['id'] = float(data['tick']['data']['id'])
+            if 'id' not in data:
+                #data['tick']['data']['id'] = float(data['tick']['data']['id'])
+                for i,value in enumerate(data['tick']['data']):
+                    data['tick']['data'][i]['id']=float(data['tick']['data'][i]['id'])
+                db.price_history.insert(data)
 
-
-
-            db.col.insert(data)
-            print(data)
