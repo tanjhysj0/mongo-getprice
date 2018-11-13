@@ -1,5 +1,3 @@
-#author: 半熟的韭菜
-
 from websocket import create_connection
 import websocket
 import gzip
@@ -8,33 +6,46 @@ import json
 
 from pymongo import MongoClient
 
-if __name__ == '__main__':
-    while(True):
-        try:
-            ws = create_connection("wss://api.huobipro.com/ws")
-            break
-        except:
-            print('connect ws error,retry...')
-
-
-    conn = MongoClient('localhost', 27017)
-    db = conn.ltcusdt
-    # 价格流
-    tradeStr="""{"sub": "market.ltcusdt.trade.detail","id":"id1"}"""
-    ws.send(tradeStr)
-    while(True):
-        compressData=ws.recv()
-        result=gzip.decompress(compressData).decode('utf-8')
-        if result[:7] == '{"ping"':
-            ts=result[8:21]
-            pong='{"pong":'+ts+'}'
-            ws.send(pong)
-            ws.send(tradeStr)
-        else:
-            data = json.loads(result)
-            if 'id' not in data:
-                #data['tick']['data']['id'] = float(data['tick']['data']['id'])
-                for i,value in enumerate(data['tick']['data']):
-                    data['tick']['data'][i]['id']=float(data['tick']['data'][i]['id'])
+class price:
+    #连接
+    def connect(self):
+        while(True):
+            try:
+                self.ws = create_connection("wss://api.huobipro.com/ws")
+            except:
+                print('connect ws error,retry...')
+    #订阅
+    def sub_trade(self):
+        self.connect()
+        tradeStr="""{"sub": "market.ltcusdt.trade.detail","id":"id1"}"""
+        self.ws.send(tradeStr)
+    def run(self):
+        conn = MongoClient('localhost', 27017)
+        db = conn.ltcusdt
+        # 价格流
+        self.sub_trade()
+        while (True):
+            try:
+                compressData = self.ws.recv()
+                result = gzip.decompress(compressData).decode('utf-8')
+            except:
+                print('网络可能连接失败,1秒后重新连接')
+                time.sleep(1)
+                self.sub_trade()
+            if result[:7] == '{"ping"':
+                ts = result[8:21]
+                pong = '{"pong":' + ts + '}'
+                self.ws.send(pong)
+            else:
+                data = json.loads(result)
+                if 'id'  in data:
+                    continue
+                for i, value in enumerate(data['tick']['data']):
+                    data['tick']['data'][i]['id'] = float(data['tick']['data'][i]['id'])
                 db.price_history.insert(data)
+if __name__ == '__main__':
+    price().run()
+
+
+
 
